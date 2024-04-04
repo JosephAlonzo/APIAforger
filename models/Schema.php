@@ -4,8 +4,6 @@ namespace Models;
 
 class Schema extends JSONSchema
 {
-    // properties are taken from the JSON Schema definition but their definitions were adjusted to the OpenAPI Specification.
-    public string $type = ''; //3.0.3 Value MUST be a string. Multiple types via an array are not supported.
     public string $format = '';
 
     // see more information about https://swagger.io/docs/specification/data-models/oneof-anyof-allof-not/
@@ -78,8 +76,11 @@ class Schema extends JSONSchema
         "array",
     ];
 
-    function __construct()
-    {
+    function __construct(string $type = '', $format = '')
+    {   
+        parent::__construct();
+        $this->type = $type;
+        $this->format = !$format ? '': $format;
         $this->discriminator = new Discriminator;
         $this->xml = new Xml();
         $this->externalDocs = new ExternalDocumentation();
@@ -90,7 +91,6 @@ class Schema extends JSONSchema
     {
         parent::isValid();
         $properties = [
-            'type',
             'format',
             'allOf',
             'anyOf',
@@ -119,7 +119,17 @@ class Schema extends JSONSchema
         array_push($this->oneOf, $instance);
     }
 
-    public function setProperties($schema, $key){
+    public function setProperties($schema, $key = ""){
+        $className = get_class($schema);
+        
+        if ( $className == "Models\Property" ){
+            if($schema->requiredProperty){
+                array_push($this->required, $schema->name); 
+            }
+            $key = $schema->name;
+            $schema->name = "";
+        }
+        
         $instance = new Schema(); 
         $instance = $this->setInstanceOfObject($instance, $schema);
         $this->properties[$key] = $instance;
@@ -294,5 +304,20 @@ class Schema extends JSONSchema
             return true;
         }
         return false;
+    }
+
+    public function setItem( $schema, $key=null, $reference = false){
+        if(!$reference)
+            $instance = new Schema();
+        else
+            $instance = new Reference();
+
+        $instance = $this->setInstanceOfObject($instance, $schema);
+
+        if ($key == null)
+            // array_push($this->items, $instance);
+            $this->items = $instance;
+        else
+            $this->items[$key] = $instance;
     }
 }

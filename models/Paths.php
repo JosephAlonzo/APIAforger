@@ -1,6 +1,6 @@
 <?php 
 namespace Models;
-
+use Models\Operation;
 
 class Paths extends Base
 {
@@ -30,11 +30,24 @@ class Paths extends Base
         // array_push($this->paths, $map);
     }
 
+    public function setOperation(Operation $operation, string $path, $method ){
+        $method = strtolower($method);
+        $allowedMethods = ["get", "put", "post", "delete", "options", "head", "patch", "trace", "servers", "parameters"];
+        if( !in_array( $method, $allowedMethods ) ) die("Invalid method");
+        if( !$path ) die("Invalid path");
+
+        if( !isset($this->paths[$path]) ){
+            $this->paths[$path] = new PathItem();
+        }
+        $this->paths[$path]->$method = $operation;
+    }
+
     protected function isValidPath(){
-        if( $this->is_associative_array($this->path) ) 
+        if( $this->is_associative_array($this->paths) ) 
             return ["success"=>false, "message"=>"Path property SHOULD be un map"];
-        foreach ($this->path as $key => $pathObj) {
-            $tmpPath = explode( '/', trim($key) );
+        foreach ($this->paths as $key => $pathObj) {
+            $key = $key ? trim($key) : ""; 
+            $tmpPath = explode( '/', $key );
             $pathName = ($tmpPath[0] != "/") ? "/".$key : $key;
 
             if( !($pathObj instanceof PathItem))

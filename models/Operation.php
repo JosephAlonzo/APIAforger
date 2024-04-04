@@ -37,7 +37,7 @@ class Operation extends Base{
      * The requestBody is only supported in HTTP methods where the HTTP 1.1 specification RFC7231 has explicitly defined semantics for request bodies.
      * In other cases where the HTTP spec is vague, requestBody SHALL be ignored by consumers.
      */
-    public RequestBody|Reference $requestBody;
+    public $requestBody;
     /**
      * REQUIRED. The list of possible responses as they are returned from executing this operation.
      */
@@ -123,7 +123,7 @@ class Operation extends Base{
 
     protected function isValidParameters(){
         foreach ($this->parameters as $key => $value) {
-            if(!($value instanceof Parameter) && !($this->default instanceof Reference))
+            if(!($value instanceof Parameter) && !($value instanceof Reference))
                 return [ "success"=> false, "message" => "Parameters with index: $key is not a instance of Parameter|Reference object"];
             if(!$value->isValid())
                 return [ "success"=> false, "message" => "Parameters with index: $key  is not a Valid Response|Reference object"];

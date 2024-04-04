@@ -7,10 +7,10 @@ class Tags extends Base
     public string $description;
     public ExternalDocumentation $externalDocs;
 
-    function __construct()
+    function __construct($name = "", $description = "")
     {
-        $this->name = '';
-        $this->description = '';
+        $this->name = $name;
+        $this->description = $description;
         $this->externalDocs = new ExternalDocumentation();
         $this->modelProperties = ["name", "externalDocs"];
         $this->requiredProperties = ["name"];

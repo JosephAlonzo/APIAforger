@@ -84,14 +84,20 @@ abstract class Base
     }
 
     protected function setInstanceOfObject( object $instance, $value ){
-        if ( gettype($value) !== 'object' || get_class($instance) != get_class($value) ) 
-            $instance->parse($value);
+        $instanceClass = get_class($instance) == "Models\Property" ? "Models\Schema" : get_class($instance);
+        $valueClass = get_class($value) == "Models\Property" ? "Models\Schema" : get_class($value);
+        if ( gettype($value) !== 'object' || $instanceClass != $valueClass ) 
+            try {
+                $instance->parse($value);
+            } catch (\Throwable $th) {
+                throw $th;
+            } 
         else
             $instance = $value;
         return $instance;
     }
 
-    public function parse($array){
+    public function parse(array $array){
         foreach ($array as $key => $value)
         {
             if($this->isADefaultProperty($key) ) continue;
@@ -119,10 +125,10 @@ abstract class Base
         foreach ($element as $key => $value) {
             $serializeNullValues = false;
             if($this->isADefaultProperty($key) ) continue;
-            if($key == "security") {
+            
+            if($key == "security" ) {
                 $serializeNullValues = true;
             }
-
             if( is_array($value) || is_object($value) ){
                 if( $result = $this->serialize( $value, [] , $serializeNullValues) ){
                     if($key == "paths"){
@@ -140,30 +146,41 @@ abstract class Base
         return json_encode($response, JSON_UNESCAPED_SLASHES|JSON_PRETTY_PRINT);
     }
 
-    public function serialize($element, $tmp = [], $serializeNullValues= false){
+    public function serialize($element, $tmp = [], $serializeNullValues= false, $is_associative_array = false){
         foreach ($element as $key => $value) {
             if( isset($element->defaultClassProperties) ){
                 $this->defaultClassProperties = $element->defaultClassProperties;
             }
-            if( $this->isADefaultProperty($key) || ( ( !$value || $value == [] ) && !$serializeNullValues ) )
+            $exceptionNull = ( $key === "explode" && !$value )  ? true : false;
+        
+            if( $this->isADefaultProperty($key) || ( ( ( !$value || $value == [] ) && !$serializeNullValues) && !$exceptionNull) )
                 continue;
+
             if(  is_object($value) || is_array($value) ){
-                $result = $this->serialize( $value, [], $serializeNullValues);
+                
+                $result = $this->serialize( $value, [], $serializeNullValues, $this->is_associative_array($value));
                 if(!$result && !$serializeNullValues) continue;
-                switch ($key) {
-                    case "HTTPStatusCode":
-                        foreach ($result as $statusCode => $bodyResponse) {
-                            $tmp[$statusCode] = $bodyResponse;
-                        }
-                        break;
-                    default:
-                        $tmp[$key] = $result; 
-                        break;
+
+                if($key === "HTTPStatusCode"){
+                    foreach ($result as $statusCode => $bodyResponse) {
+                        $tmp[$statusCode] = $bodyResponse;
+                    }
                 }
+                elseif( is_numeric($key) && !$is_associative_array){
+                    array_push($tmp, $result );
+                }
+                else
+                    $tmp[$key] = $result; 
             }
             else {
-                $key = ($key == "ref") ? '$'.$key: $key;
-                $tmp[$key] = $value;
+                $key = ($key === "ref") ? '$'.$key: $key;
+                $value = ( is_bool($value) ) ? $value : html_entity_decode($value);
+                if( is_numeric($key) ){
+                    array_push($tmp, $value);
+                }
+                else{
+                    $tmp[$key] = $value;
+                }
             }
                 
         }
@@ -171,7 +188,7 @@ abstract class Base
     }
 
     protected function isADefaultProperty($property){
-        if(in_array($property, $this->defaultClassProperties))
+        if(in_array($property, $this->defaultClassProperties, true))
             return true;
         return false;
     }

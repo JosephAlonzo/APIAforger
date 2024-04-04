@@ -7,6 +7,8 @@ namespace Models;
  */
 class JSONSchema extends Base
 {
+    // properties are taken from the JSON Schema definition but their definitions were adjusted to the OpenAPI Specification.
+    public string $type = ''; //3.0.3 Value MUST be a string. Multiple types via an array are not supported.
     //following properties are taken directly from the JSON Schema definition and follow the same specifications
     public null|string $title = null;
     public null|int $multipleOf= null;
@@ -29,6 +31,7 @@ class JSONSchema extends Base
     function __construct()
     {
         $this->modelProperties = [
+            'type',
             'title',
             'multipleOf',
             'maximum',

@@ -88,6 +88,16 @@ class Parameter extends Base
         $this->requiredProperties = [ "name", "in" ];
         $this->schema = new Schema();
     }
+    
+    public function setSchema( $schema, $index=null, $reference = false){
+        if(!$reference) 
+            $instance = new Parameter(); 
+        else 
+            $instance = new Reference(); 
+        $instance = $this->setInstanceOfObject($instance, $schema);
+        
+        $this->schema = $instance;
+    }
     // The name of the parameter. Parameter names are case sensitive.
     // If in is "path", the name field MUST correspond to a template expression occurring within the path field in the Paths Object. See Path Templating for further information.
     // If in is "header" and the name field is "Accept", "Content-Type" or "Authorization", the parameter definition SHALL be ignored.

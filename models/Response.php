@@ -28,7 +28,7 @@ class Response extends Base
     // public array $links;
 
     function __construct(string $description = ''){
-        $this->descripcion = $description;
+        $this->description = $description;
         $this->modelProperties = [
             'descripcion',
             'headers',
@@ -65,7 +65,7 @@ class Response extends Base
     }
 
     public function isValidDescription(){
-        if( !is_string( $this->descripcion ) || !$this->descripcion ) 
+        if( !is_string( $this->description ) || !$this->description ) 
             return [ "success" => false, "description MUST be string and MUST be not empty" ];
         return ["success" => true];
     }
